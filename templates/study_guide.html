@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ title or "Lecture Study Guide" }}</title>
+    <link rel="stylesheet" href="{{ css_path }}">
+</head>
+<body>
+
+    <!-- Cover / Header Banner -->
+    <header class="cover-header">
+        <span class="cover-badge">Evidence-Backed Personal Exam Assistant</span>
+        <h1 class="cover-title">{{ title or "Lecture Notes & Comprehensive Study Guide" }}</h1>
+        <div class="cover-meta">
+            <span class="meta-item"><strong>Date:</strong> {{ date_str }}</span>
+            <span class="meta-item"><strong>Duration:</strong> {{ duration_str }}</span>
+            <span class="meta-item"><strong>Slides Analyzed:</strong> {{ slides|length }}</span>
+            <span class="meta-item"><strong>Run ID:</strong> {{ run_id }}</span>
+            {% if evidence_coverage is defined %}
+            <span class="meta-item"><strong>Evidence Grounding:</strong> {{ (evidence_coverage * 100)|round(1) }}%</span>
+            {% endif %}
+        </div>
+    </header>
+
+    <!-- 1. Executive Overview -->
+    <section>
+        <h1>1. Executive Overview</h1>
+        <div class="callout-box">
+            <p>{{ overview }}</p>
+        </div>
+    </section>
+
+    <!-- 2. Key Takeaways & Core Insights -->
+    <section>
+        <h1>2. Key Takeaways & Core Insights</h1>
+        <div class="takeaways-list">
+            <ul>
+                {% for point in key_points %}
+                <li>{{ point }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </section>
+
+    <!-- 3. Core Concepts & Structured Knowledge -->
+    {% if concepts %}
+    <section>
+        <h1>3. Core Concepts & Evidence-Backed Knowledge</h1>
+        <p style="font-size: 8.5pt; color: #718096; margin-bottom: 12px;">
+            Evidence Badges: <span class="badge-supported">✓ Supported</span> <span class="badge-derived">~ Derived</span> <span class="badge-uncertain">? Uncertain</span>
+        </p>
+        {% for c in concepts %}
+        <div class="concept-card">
+            <div class="concept-title">
+                {% if c.confidence == 'HIGH' %}
+                <span class="badge-supported">✓ Directly Supported</span>
+                {% elif c.confidence == 'LOW' %}
+                <span class="badge-uncertain">? Review Needed</span>
+                {% else %}
+                <span class="badge-derived">~ Lecture Derived</span>
+                {% endif %}
+                <span class="timestamp-badge">Lecture {{ c.timestamp_hms }}</span>
+                {% if c.slide_id %}
+                <span class="timestamp-badge">Slide {{ c.slide_id }}</span>
+                {% endif %}
+                {{ c.name }}
+            </div>
+            {% if c.definition %}
+            <div class="concept-def"><strong>Definition:</strong> {{ c.definition }}</div>
+            {% endif %}
+            <div class="concept-expl">{{ c.explanation }}</div>
+            {% if c.evidence_references %}
+            <div class="concept-ref">
+                <em>Grounding Citations:</em>
+                {% for ref in c.evidence_references %}
+                <span>[{{ ref.type }}: {{ ref.evidence_text[:120] }}]</span>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </section>
+    {% endif %}
+
+    <!-- 4. Lecturer Emphasis & Exam Alerts -->
+    {% if exam_signals %}
+    <section>
+        <h1>4. Lecturer Emphasis & Exam Alerts</h1>
+        <div class="takeaways-list">
+            <ul>
+                {% for sig in exam_signals %}
+                <li>
+                    <span class="timestamp-badge">Lecture {{ sig.timestamp_hms }}</span>
+                    {% if sig.signal_type == 'EXAM_SIGNAL' %}
+                    <strong style="color: #c53030;">[EXAM ALERT]</strong>
+                    {% else %}
+                    <strong style="color: #d69e2e;">[LECTURER EMPHASIS]</strong>
+                    {% endif %}
+                    "{{ sig.text }}"
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </section>
+    {% endif %}
+
+    <!-- 5. In-Depth Synthesized Notes -->
+    <section>
+        <h1>5. Detailed Lecture Notes & Explanations</h1>
+        <div class="guide-body">
+            {{ guide_html | safe }}
+        </div>
+    </section>
+
+    <!-- 6. Slide Reference Gallery -->
+    {% if slides %}
+    <section style="page-break-before: always;">
+        <h1>6. Key Slide Highlights & Visual References</h1>
+        {% for slide in slides %}
+        <div class="slide-card">
+            <div class="slide-header">
+                <span><strong>Slide {{ slide.slide_index }}</strong> (Lecture Time: {{ slide.timestamp_formatted }})</span>
+                <span class="slide-ocr-badge">Source: {{ slide.source }}</span>
+                {% if slide.appearance_count and slide.appearance_count > 1 %}
+                <span class="slide-ocr-badge" style="background:#fefcbf; color:#744210;">Revisited {{ slide.appearance_count }}x</span>
+                {% endif %}
+            </div>
+            <div class="slide-content-layout">
+                {% if slide.frame_path %}
+                <img src="{{ slide.frame_path }}" alt="Slide {{ slide.slide_index }}" class="slide-thumb">
+                {% endif %}
+                <div class="slide-text">
+                    {% if slide.ocr_text %}
+                    <p style="margin: 0; white-space: pre-wrap; font-family: inherit;">{{ slide.ocr_text }}</p>
+                    {% else %}
+                    <p style="margin: 0; color: #a0aec0; font-style: italic;">No text detected on this slide.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </section>
+    {% endif %}
+
+    <!-- 7. Verification & Grounding Summary -->
+    {% if verification_stats %}
+    <section style="page-break-before: always;">
+        <h1>7. Evidence Verification & Grounding Summary</h1>
+        <div class="callout-box">
+            <p><strong>Total Claims Analyzed:</strong> {{ verification_stats.total_claims }}</p>
+            <p><strong>Supported Claims:</strong> {{ verification_stats.supported }} | <strong>Partially Supported:</strong> {{ verification_stats.partially_supported }} | <strong>Uncertain:</strong> {{ verification_stats.uncertain }}</p>
+            <p><strong>Evidence Coverage Ratio:</strong> {{ (verification_stats.evidence_coverage * 100)|round(1) }}%</p>
+            <p style="font-size: 8.5pt; color: #718096; margin-top: 8px;">
+                All claims are grounded in local Whisper speech transcription and Tesseract/Ollama slide character recognition.
+            </p>
+        </div>
+    </section>
+    {% endif %}
+
+</body>
+</html>

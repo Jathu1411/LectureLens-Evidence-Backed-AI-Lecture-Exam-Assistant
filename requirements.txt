@@ -1,0 +1,10 @@
+# Local Offline Lecture Video to Study Guide Pipeline
+psycopg[binary]>=3.1.18
+faster-whisper>=1.0.3
+opencv-python>=4.8.0
+pytesseract>=0.3.10
+weasyprint>=60.0
+jinja2>=3.1.2
+requests>=2.31.0
+numpy>=1.24.0
+python-dotenv>=1.0.0
