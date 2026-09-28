@@ -1,0 +1,19 @@
+
+# Python
+venv/
+.venv/
+__pycache__/
+*.py[cod]
+
+# LectureLens generated output
+output/
+
+# Media / large generated files
+*.mp4
+*.mp3
+*.wav
+*.mkv
+*.avi
+
+# Generated documents
+*.pdf
